@@ -1,6 +1,6 @@
 # example repository config (see 'hg help config' for more info)
 [paths]
-mbed-studio-cache = c:\Users\pasca\AppData\Local\Mbed Studio\library-cache\os.mbed.com\users\pmic\code\PM2_Libary
+mbed-studio-cache = /home/studio/mbed-studio-data/library-cache/os.mbed.com/users/pmic/code/PM2_Libary
 default = https://os.mbed.com/users/pmic/code/PM2_Libary/
 
 # path aliases to other clones of this repo in URLs or filesystem paths
