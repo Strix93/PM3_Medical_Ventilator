@@ -1,0 +1,3 @@
+BUILD\NUCLEO_F446RE\ARMC6\PM2_Libary\FastPWM\Device\FastPWM_LPC1768.o: \
+  PM2_Libary\FastPWM\Device\FastPWM_LPC1768.cpp \
+  BUILD\NUCLEO_F446RE\ARMC6\mbed_config.h
