@@ -18,7 +18,7 @@
 // Konfiguration was auf welchen Pin's angeschlossen ist.
 // IN
 PinName nucleo_button_pin = PC_13;  // user button on nucleo board
-PinName user_button_pin = PC_13;    
+PinName user_button_pin = PC_6;    
 //PinName mechanical_button_pin = PC_5;
 
 // OUT
@@ -53,6 +53,7 @@ einen Bereich für den Fluss/Ablauf
 enum State {
     initial,
     reference,
+    teach,
     home,
     ready,
     cycle
@@ -143,8 +144,11 @@ int main()
 
         case reference:
         nucleo_led.setInterval("100,-100,100,-300");
-        if (motorReference() and motorTeach()) state = home;
+        if (motorReference()) state = teach;
         break;
+
+        case teach:
+        if (motorTeach(user_button.read())) state = home;
 
         case home:
         if (motorMoveHome()) state = ready;
@@ -155,7 +159,7 @@ int main()
         break;
 
         case cycle:
-        motorCycle();
+        motorCycle(1000,3000);
         if (user_button_pressed.getLongPressed(true)) state = home;
         break;
 

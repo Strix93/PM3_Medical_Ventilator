@@ -16,6 +16,9 @@ void setStopMotor();
 void reference_pressed_fcn();
 void reference_released_fcn();
 
+bool motorOnTarget(float target);
+void reset();
+
 
 
 

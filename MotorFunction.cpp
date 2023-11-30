@@ -22,7 +22,7 @@ PinName encoder_M1_pin1 = PA_6;
 PinName encoder_M1_pin2 = PC_7;
 
 // Reference Button
-PinName reference_pin = PC_5;
+PinName reference_pin = PB_2;
 
 
 
@@ -137,17 +137,38 @@ bool motorTeach(bool button){
 }
 bool motorMoveHome(){
     positionController_M1.setDesiredRotation(homePos, 1);
-    return (positionController_M1.getSpeedRPS() < 0.1);
+    return motorOnTarget(homePos);
 }
 
 int cycle_step = 0;
 
 bool motorCycle(int time_in_ms, int time_out_ms){
+    float distance = abs(homePos-endPos);
+    switch (cycle_step) {
+    case 0:
     cycle_time.start();
     cycle_time.reset();
-    return false;
+    cycle_step = 1;
+    break;
+    case 1:
+    positionController_M1.setDesiredRotation(endPos, distance/time_in_ms);
+    if (motorOnTarget(endPos)) cycle_step = 2;
+    break;
+    case 2:
+    positionController_M1.setDesiredRotation(homePos, distance/time_out_ms);
+    if (motorOnTarget(homePos)) cycle_step = 1;
+    break;
+    default:
+    cycle_step = 0;
+    }
+    return cycle_step != 0;
 }
 
+const float EPS = 1e-6;
+
+bool motorOnTarget(float target){
+    return abs(target - positionController_M1.getRotation())<EPS;
+}
 
 
 void setRotateMotor(float speed, bool direction, float step){
@@ -181,4 +202,11 @@ void reference_released_fcn(){
         reference_filter.reset();
         setStopMotor();
     }
+}
+
+void reset(){
+    cycle_step = 0;
+    teach_step = 0;
+    reference_step = 0;
+    referenced = false;
 }
