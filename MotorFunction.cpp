@@ -61,7 +61,7 @@ float referencePos;
 bool referenced = false;
 float homePos;
 
-bool referenceMotor(){
+bool motorReference(){
     switch (reference_step) {
     case 0:
         if (reference.read() == 0){
