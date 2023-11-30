@@ -1,11 +1,12 @@
 # include "StateLed.h"
+#include <cstdio>
 #include <string>
 
 const float StateLed::TS = 0.001f;                       // period of 1 ms
 
 StateLed::StateLed(PinName pin, string interval, char seperator) : DigitalOut(pin) {
     this->interval = StringIntervalSeperator(interval, seperator);
-    
+    printf("LED load");
 // set up thread
     thread.start(callback(this, &StateLed::run));
     ticker.attach(callback(this, &StateLed::sendThreadFlag), std::chrono::microseconds{static_cast<long int>(1.0e6f * TS)});
@@ -24,7 +25,7 @@ void StateLed::run(){
     while(true){
         // wait for the periodic signal
         ThisThread::flags_wait_any(threadFlag);
-
+        printf("LED check");
         // read timer
         int actual_task_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(task_timer.elapsed_time()).count();
         // Prüfen, ist die Zeit vergangen
@@ -33,6 +34,8 @@ void StateLed::run(){
             actual_interval++;
             if (actual_interval > interval.getLength()) actual_interval = 1;
             int interval_time = stoi(interval.getPos(actual_interval));
+            string test = interval.getPos(actual_interval);
+            printf("LED Intervall: %s", test.c_str());
 
             // Befehl ausführen, neue Zeit setzen
             if (interval_time > 0) write(1);

@@ -1,10 +1,13 @@
 #include "MotorFunction.h"
 
+#include <cstdio>
+#include <string>
+
 // create SpeedController and PositionController objects, default parametrization is for 78.125:1 gear box
 float max_voltage = 12.0f;                  // define maximum voltage of battery packs, adjust this to 6.0f V if you only use one batterypack
-float counts_per_turn = 20.0f * 78.125f;    // define counts per turn at gearbox end: counts/turn * gearratio
-float kn = 180.0f / 12.0f;                  // define motor constant in rpm per V
-float k_gear = 100.0f / 78.125f;            // define additional ratio in case you are using a dc motor with a different gear box, e.g. 100:1
+float counts_per_turn = 20.0f * 78.0f;    // define counts per turn at gearbox end: counts/turn * gearratio
+float kn = 78.0f / 12.0f;                  // define motor constant in rpm per V
+float k_gear = 78.0f / 100.0f;            // define additional ratio in case you are using a dc motor with a different gear box, e.g. 100:1
 float kp = 0.1f;                            // define custom kp, this is the default speed controller gain for gear box 78.125:1
 float max_speed_rps = 0.5f;                 // define maximum speed that the position controller is changig the speed, has to be smaller or equal to kn * max_voltage
 float pwm_period_s = 0.00005f;    // define pwm period time in seconds and create FastPWM objects to command dc motors
@@ -13,7 +16,16 @@ bool motorStoped;
 Timer reference_filter;
 Timer cycle_time;
 
-const int move_main_direction = 1;
+int reference_step = 0;
+float referencePos;
+bool referenced = false;
+float homePos;
+
+int teach_step = 0;
+Timer timeOut_teach;
+float endPos;
+
+const int move_main_direction = -1;
 
 // Motor
 PinName enable_dc_motors_pin = PB_15;
@@ -56,10 +68,14 @@ void motorEnable(){
     
 }
 
-int reference_step = 0;
-float referencePos;
-bool referenced = false;
-float homePos;
+void debug(){
+    float temp = positionController_M1.getRotation();
+    printf("Geber: %3.33f ", temp);
+    printf("Home: %3.33f ", homePos);
+    printf("End: %3.33f ", endPos);
+}
+
+
 
 bool motorReference(){
     switch (reference_step) {
@@ -95,9 +111,7 @@ bool motorReference(){
     return referenced;
 }
 
-int teach_step = 0;
-Timer timeOut_teach;
-float endPos;
+
 
 bool motorTeach(bool button){
     if (referenced){
@@ -164,7 +178,7 @@ bool motorCycle(int time_in_ms, int time_out_ms){
     return cycle_step != 0;
 }
 
-const float EPS = 1e-6;
+const float EPS = 1e-4;
 
 bool motorOnTarget(float target){
     return abs(target - positionController_M1.getRotation())<EPS;
@@ -204,9 +218,10 @@ void reference_released_fcn(){
     }
 }
 
-void reset(){
+void resetMotorControll(){
     cycle_step = 0;
     teach_step = 0;
     reference_step = 0;
     referenced = false;
+    setStopMotor();
 }

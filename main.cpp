@@ -1,9 +1,10 @@
 // Medical Ventilation
 #include "mbed.h"
 #include "PM2_Libary.h"
+#include <cstdio>
+#include <string>
 #include "ButtonFunction.h"
 #include "StateLed.h"
-#include <functional>
 #include "MotorFunction.h"
 
 // logical variable main task
@@ -50,7 +51,7 @@ einen Bereich für den Fluss/Ablauf
 //void setRotateMotor(float speed, bool direction);
 //void setStopMotor();
 
-enum State {
+enum stateMachine {
     initial,
     reference,
     teach,
@@ -59,7 +60,7 @@ enum State {
     cycle
 };
 
-State stateMachine(int state);
+//State stateMachine(int state);
 int state;
 
 //bool reference_activ = false;
@@ -74,15 +75,16 @@ int main_task_period_ms = 50;   // define main task period time in ms e.g. 50 ms
 Timer main_task_timer;          // create Timer object which we use to run the main task every main task period time in ms
 
 // led on nucleo board
-//DigitalOut user_led(nucleo_led_pin);      // create DigitalOut object to command user led
-StateLed nucleo_led(nucleo_led_pin);
+DigitalOut user_led(nucleo_led_pin);      // create DigitalOut object to command user led
+//StateLed nucleo_led(nucleo_led_pin);
 
 // mechanical button
 DigitalIn nucleo_button(nucleo_button_pin);
 DigitalIn user_button(user_button_pin);
+bool user_button_old;
 //InterruptIn reference_button(mechanical_button_pin);  // create DigitalIn object to evaluate extra mechanical button, you need to specify the mode for proper usage, see below
-ButtonPressed user_button_pressed(user_button_pin);
-ButtonPressed nucleo_button_pressed(nucleo_button_pin);
+//ButtonPressed user_button_pressed(user_button_pin);
+//ButtonPressed nucleo_button_pressed(nucleo_button_pin);
 
 // 78:1, 100:1, ... Metal Gearmotor 20Dx44L mm 12V CB
 //DigitalOut enable_motors(enable_dc_motors_pin);    // create DigitalOut object to enable dc motors
@@ -107,7 +109,6 @@ int main()
     // attach button fall and rise functions to user button object
     //reference_button.fall(&reference_button_pressed_fcn);
     //reference_button.rise(&reference_button_released_fcn);
-
     // start timer
     main_task_timer.start();
 
@@ -115,6 +116,9 @@ int main()
     user_button.mode(PullDown);
     //reference_button.mode(PullUp);
 
+
+    motorEnable();
+    resetMotorControll();
     // enable hardwaredriver dc motors: 0 -> disabled, 1 -> enabled
     //enable_motors = 1;
 
@@ -130,43 +134,61 @@ int main()
 
         main_task_timer.reset();
 
+        debug();
         //if (user_button.read() == 1) {
         //    positionController_M1.setDesiredRotation(1.0/360);
         //} else if (reference_button.read() == 0) {
         //    positionController_M1.setDesiredRotation(-1.0/360);
         //}
 
+        
+    //string test ="Main";
+    //printf("%s\n", test.c_str());
+    user_led = !user_led;
+
         switch (stateMachine(state)) {
         case initial:
-        nucleo_led.setInterval("100,-100");
-        if (user_button_pressed.getShortPressed(true)) state = reference;
+        printf("State: Initial\n");
+        //nucleo_led.setInterval("100,-100");
+        //if (user_button_pressed.getShortPressed(true)) state = reference;
+        if (user_button.read() and !user_button_old) state = reference;
         break;
 
         case reference:
-        nucleo_led.setInterval("100,-100,100,-300");
+        printf("State: reference\n");
+        //nucleo_led.setInterval("100,-100,100,-300");
         if (motorReference()) state = teach;
         break;
 
         case teach:
+        printf("State: teach\n");
         if (motorTeach(user_button.read())) state = home;
+        break;
 
         case home:
+        printf("State: home\n");
         if (motorMoveHome()) state = ready;
+        break;
 
         case ready:
-        nucleo_led.setInterval("300,-300");
-        if (user_button_pressed.getShortPressed(true)) state = cycle;
+        printf("State: ready\n");
+        //nucleo_led.setInterval("300,-300");
+        //if (user_button_pressed.getShortPressed(true)) state = cycle;
+        if (user_button.read() and !user_button_old) state = cycle;
         break;
 
         case cycle:
+        printf("State: cycle\n");
         motorCycle(1000,3000);
-        if (user_button_pressed.getLongPressed(true)) state = home;
+        //if (user_button_pressed.getLongPressed(true)) state = home;
+        if (user_button.read() and !user_button_old) state = home;
         break;
 
         default:
         state = initial;
         break;
         }
+        user_button_old = user_button.read();
         
         /*
         if (do_execute_main_task) {
@@ -245,31 +267,16 @@ int main()
         // printf("%.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f\r\n", imu.readGyroX(), imu.readGyroY(), imu.readGyroZ(),
         // imu.readAccX(), imu.readAccY(), imu.readAccZ(), imu.readMagX(), imu.readMagY(), imu.readMagZ());
 
-        // read timer and make the main thread sleep for the remaining time span (non blocking)
+        // read timer and make the main thread sleep for the remaining time span (non blocking)*/
         int main_task_elapsed_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(main_task_timer.elapsed_time()).count();
         thread_sleep_for(main_task_period_ms - main_task_elapsed_time_ms);
     }
 }
 
 
-bool teachtMotor();
-bool moveHomeMotor();
-bool cycleMotor();
-void setRotateMotor(float speed, bool direction);
-void setStopMotor();
+//bool teachtMotor();
+//bool moveHomeMotor();
+//bool cycleMotor();
+//void setRotateMotor(float speed, bool direction);
+//void setStopMotor();
 
-void user_button_pressed_fcn()
-{
-    //user_button_timer.start();
-    //user_button_timer.reset();
-}
-
-void user_button_released_fcn()
-{
-    // read timer and toggle do_execute_main_task if the button was pressed longer than the below specified time
-    //int user_button_elapsed_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(user_button_timer.elapsed_time()).count();
-    //user_button_timer.stop();
-    //if (user_button_elapsed_time_ms > 200) {
-    //    do_execute_main_task = !do_execute_main_task;
-    //}
-}
