@@ -16,7 +16,8 @@ public:
     * @param interval - Zeiten in ms, positiv = ein, negativ = aus
     * @param seperator - Trennzeichen zwischen den Zeiten im Interval
     */
-    StateLed(PinName pin, string interval = "100, -100", char seperator = ',');
+    //StateLed(PinName pin, string interval, char seperator = ',');
+    StateLed(PinName pin, int interval_mode);
 
     virtual ~StateLed();
 
@@ -26,13 +27,16 @@ public:
     * @param interval - Zeiten in ms, positiv = ein, negativ = aus
     * @param seperator - Trennzeichen zwischen den Zeiten im Interval
     */
-    void setInterval(string interval = "100, -100", char seperator = ',');
+    //void setInterval(string interval, char seperator = ',');
+    void setInterval(int interval_mode);
 
 private:
 
     static const float TS;
 
     StringIntervalSeperator interval;
+    int                interval2[10];
+    int                interval2_length;
 
     int                task_time_ms;
     int                actual_interval;

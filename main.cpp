@@ -76,7 +76,7 @@ Timer main_task_timer;          // create Timer object which we use to run the m
 
 // led on nucleo board
 DigitalOut user_led(nucleo_led_pin);      // create DigitalOut object to command user led
-//StateLed nucleo_led(nucleo_led_pin);
+StateLed nucleo_led(nucleo_led_pin, 0);
 
 // mechanical button
 DigitalIn nucleo_button(nucleo_button_pin);
@@ -144,35 +144,37 @@ int main()
         
     //string test ="Main";
     //printf("%s\n", test.c_str());
-    user_led = !user_led;
+    //user_led = !user_led;
 
         switch (stateMachine(state)) {
         case initial:
         printf("State: Initial\n");
-        //nucleo_led.setInterval("100,-100");
+        nucleo_led.setInterval(0);
         //if (user_button_pressed.getShortPressed(true)) state = reference;
         if (user_button.read() and !user_button_old) state = reference;
         break;
 
         case reference:
         printf("State: reference\n");
-        //nucleo_led.setInterval("100,-100,100,-300");
+        nucleo_led.setInterval(3);
         if (motorReference()) state = teach;
         break;
 
         case teach:
         printf("State: teach\n");
+        nucleo_led.setInterval(4);
         if (motorTeach(user_button.read())) state = home;
         break;
 
         case home:
         printf("State: home\n");
+        nucleo_led.setInterval(2);
         if (motorMoveHome()) state = ready;
         break;
 
         case ready:
         printf("State: ready\n");
-        //nucleo_led.setInterval("300,-300");
+        nucleo_led.setInterval(1);
         //if (user_button_pressed.getShortPressed(true)) state = cycle;
         if (user_button.read() and !user_button_old) state = cycle;
         break;
@@ -190,93 +192,11 @@ int main()
         }
         user_button_old = user_button.read();
         
-        /*
-        if (do_execute_main_task) {
-
-            // read analog input
-            // ir_distance_mV = 1.0e3f * ir_analog_in.read() * 3.3f;
-
-            // command dc motors if mechanical button is pressed
-            if (mechanical_button.read()) {
-                pwm_M1.write(0.75f); // write output voltage to motor M1
-                // speedController_M2.setDesiredSpeedRPS(0.5f); // set a desired speed for speed controlled dc motors M2
-                // positionController_M3.setDesiredRotation(1.5f, max_speed_rps); // set a desired rotation for position controlled dc motors M3
-            } else {
-                pwm_M1.write(0.5f);
-                // speedController_M2.setDesiredSpeedRPS(0.0f);
-                // positionController_M3.setDesiredRotation(0.0f, max_speed_rps);
-            }
-
-            // check if servos are enabled
-            // if (!servo_S1.isEnabled()) servo_S1.Enable();
-            // if (!servo_S2.isEnabled()) servo_S2.Enable();
-            // command servo position, this needs to be calibrated
-            // servo_S1.SetPosition(servo_S1_angle);
-            // if (servo_S1_angle < 1.0f & servo_counter%loops_per_seconds == 0 & servo_counter != 0) {
-            //     servo_S1_angle += 0.01f;
-            // }
-            // servo_S2.SetPosition(servo_S2_angle);
-            // if (servo_S2_angle < 1.0f & servo_counter%loops_per_seconds == 0 & servo_counter != 0) {
-            //     servo_S2_angle += 0.01f;
-            // }
-            // servo_counter++;
-
-            // read ultra sonic distance sensor
-            // us_distance_cm = us_range_finder.read_cm();
-
-            // visual feedback that the main task is executed
-            // extra_led = 1;
-
-        } else {
-
-            // ir_distance_mV = 0.0f;
-
-            pwm_M1.write(0.5f);
-            // speedController_M2.setDesiredSpeedRPS(0.0f);
-            // positionController_M3.setDesiredRotation(0.0f, max_speed_rps);
-
-            // servo_S1_angle = 0;
-            // servo_S2_angle = 0;
-            // servo_S1.SetPosition(servo_S1_angle);
-            // servo_S2.SetPosition(servo_S2_angle);
-            // if (servo_S1.isEnabled()) servo_S1.Disable();
-            // if (servo_S2.isEnabled()) servo_S2.Disable();
-
-            // us_distance_cm = 0.0f;
-
-            // extra_led = 0;
-        }
-        */
-
         //user_led = !user_led;
-
-        // do only output via serial what's really necessary (this makes your code slow)
-        // printf("IR sensor (mV): %3.3f, Encoder M1: %3d, Speed M2 (rps) %3.3f, Position M3 (rot): %3.3f, Servo S1 angle (normalized): %3.3f, Servo S2 angle (normalized): %3.3f, US sensor (cm): %3.3f\r\n",
-        //        ir_distance_mV,
-        //        encoder_M1.read(),
-        //        speedController_M2.getSpeedRPS(),
-        //        positionController_M3.getRotation(),
-        //        servo_S1_angle,
-        //        servo_S2_angle,
-        //        us_distance_cm);
-
-        // read out the imu, the actual frames of the sensor reading needs to be figured out
-        // imu.updateGyro();
-        // imu.updateAcc();
-        // imu.updateMag();
-        // printf("%.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f\r\n", imu.readGyroX(), imu.readGyroY(), imu.readGyroZ(),
-        // imu.readAccX(), imu.readAccY(), imu.readAccZ(), imu.readMagX(), imu.readMagY(), imu.readMagZ());
 
         // read timer and make the main thread sleep for the remaining time span (non blocking)*/
         int main_task_elapsed_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(main_task_timer.elapsed_time()).count();
         thread_sleep_for(main_task_period_ms - main_task_elapsed_time_ms);
     }
 }
-
-
-//bool teachtMotor();
-//bool moveHomeMotor();
-//bool cycleMotor();
-//void setRotateMotor(float speed, bool direction);
-//void setStopMotor();
 
