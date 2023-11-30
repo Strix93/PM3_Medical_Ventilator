@@ -1,6 +1,6 @@
 # example repository config (see 'hg help config' for more info)
 [paths]
-mbed-studio-cache = /home/studio/mbed-studio-data/library-cache/os.mbed.com/users/pmic/code/FastPWM
+mbed-studio-cache = c:\Users\pasca\AppData\Local\Mbed Studio\library-cache\os.mbed.com\users\pmic\code\FastPWM
 default = https://os.mbed.com/users/pmic/code/FastPWM/
 
 # path aliases to other clones of this repo in URLs or filesystem paths

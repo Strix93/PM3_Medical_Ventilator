@@ -1,6 +1,6 @@
 # example repository config (see 'hg help config' for more info)
 [paths]
-mbed-studio-cache = /home/studio/mbed-studio-data/library-cache/os.mbed.com/teams/altb_pmic/code/RangeFinder
+mbed-studio-cache = c:\Users\pasca\AppData\Local\Mbed Studio\library-cache\os.mbed.com\teams\altb_pmic\code\RangeFinder
 default = https://os.mbed.com/teams/altb_pmic/code/RangeFinder/
 
 # path aliases to other clones of this repo in URLs or filesystem paths
