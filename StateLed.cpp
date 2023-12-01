@@ -63,6 +63,38 @@ void StateLed::setInterval(int interval_mode){
     interval2[3] = -100;
     interval2_length = 4;
     break;
+    case 11:
+    interval2[0] = 100;
+    interval2[1] = -900;
+    interval2_length = 2;
+    break;
+    case 12:
+    interval2[0] = 100;
+    interval2[1] = -100;
+    interval2[2] = 100;
+    interval2[3] = -700;
+    interval2_length = 4;
+    break;
+    case 13:
+    interval2[0] = 100;
+    interval2[1] = -100;
+    interval2[2] = 100;
+    interval2[3] = -100;
+    interval2[4] = 100;
+    interval2[5] = -500;
+    interval2_length = 6;
+    break;
+    case 14:
+    interval2[0] = 100;
+    interval2[1] = -100;
+    interval2[2] = 100;
+    interval2[3] = -100;
+    interval2[4] = 100;
+    interval2[5] = -100;
+    interval2[6] = 100;
+    interval2[7] = -300;
+    interval2_length = 8;
+    break;
     }
 }
 
@@ -89,7 +121,7 @@ void StateLed::run(){
             //}
             //string test = interval.getPos(actual_interval);
             //printf("LED Intervall: %s", test.c_str());
-            printf("LED Intervall: %d \n", interval_time);
+            printf("LED Intervall: %d ", interval_time);
             // Befehl ausführen, neue Zeit setzen
             if (interval_time > 0) write(1);
             else if (interval_time < 0) write(0);

@@ -8,7 +8,7 @@ void motorEnable();
 bool motorReference();
 bool motorTeach(bool button);
 bool motorMoveHome();
-bool motorCycle(int time_in_ms, int time_out_ms);
+bool motorCycle(int time_in_ms, int time_out_ms, int cycle_time_ms);
 
 void setRotateMotor(float speed, bool direction, float step = 10);
 void setStopMotor();
@@ -20,7 +20,8 @@ bool motorOnTarget(float target);
 void resetMotorControll();
 
 void debug();
-
+float generateHigerMoment(float soll_speed);
+void resetHigerMoment();
 
 
     

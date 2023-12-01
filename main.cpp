@@ -33,10 +33,13 @@ PinName nucleo_led_pin = LED1;
 
 /*
 ToDo:
-einen Bereich für den Motor
+einen Bereich für den Motor     . OK
 einen Bereich für den Button    - OK
 einen Bereich für die LED       - OK
-einen Bereich für den Fluss/Ablauf
+einen Bereich für den Fluss/Ablauf - OK
+
+led Blinkintervall besser verständlich
+drehzahl erhöhen wenn drezahl nicht erreicht (erhöt drehmoment)
 */
 
 
@@ -156,13 +159,13 @@ int main()
 
         case reference:
         printf("State: reference\n");
-        nucleo_led.setInterval(3);
+        nucleo_led.setInterval(11);
         if (motorReference()) state = teach;
         break;
 
         case teach:
         printf("State: teach\n");
-        nucleo_led.setInterval(4);
+        nucleo_led.setInterval(12);
         if (motorTeach(user_button.read())) state = home;
         break;
 
@@ -181,7 +184,7 @@ int main()
 
         case cycle:
         printf("State: cycle\n");
-        motorCycle(1000,3000);
+        motorCycle(1000,3000,4000);
         //if (user_button_pressed.getLongPressed(true)) state = home;
         if (user_button.read() and !user_button_old) state = home;
         break;

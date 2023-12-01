@@ -25,7 +25,10 @@ int teach_step = 0;
 Timer timeOut_teach;
 float endPos;
 
+int cycle_step = 0;
+
 const int move_main_direction = -1;
+const float EPS = 1e-2;
 
 // Motor
 PinName enable_dc_motors_pin = PB_15;
@@ -60,7 +63,8 @@ void motorEnable(){
     //Motoren initialisieren
     pwm_M1.period(pwm_period_s);
     pwm_M1.write(0.5f);
-    positionController_M1.setDesiredRotation(positionController_M1.getRotation(),0);
+    //positionController_M1.setDesiredRotation(positionController_M1.getRotation(),0);
+    setStopMotor();
 
     //Referenzierbutton initialisieren
     reference.mode(PullUp);
@@ -70,9 +74,9 @@ void motorEnable(){
 
 void debug(){
     float temp = positionController_M1.getRotation();
-    printf("Geber: %3.33f ", temp);
-    printf("Home: %3.33f ", homePos);
-    printf("End: %3.33f ", endPos);
+    printf("Geber: %3.3f ", temp);
+    printf("Home: %3.3f ", homePos);
+    printf("End: %3.3f ", endPos);
 }
 
 
@@ -89,15 +93,19 @@ bool motorReference(){
         }
         break;
     case 1:
-        if (reference.read() == 1 and motorStoped){
-            setRotateMotor(0.1, true);
-            reference_step = 2;
+        if (motorStoped){
+            if (reference.read() == 1){
+                setRotateMotor(0.1, true);
+                reference_step = 2;
+            } else {
+                reference_step = 2;
+            }
         }
         break;
     case 2:
         if (motorStoped){
             referencePos = positionController_M1.getRotation();
-            homePos = referencePos + 0.5;
+            homePos = referencePos - 0.05;
             reference_step = 3;
         }
         break;
@@ -108,6 +116,7 @@ bool motorReference(){
         setStopMotor();
         reference_step = 0;
     }
+    printf("reference step: %d ", reference_step);
     return referenced;
 }
 
@@ -126,7 +135,7 @@ bool motorTeach(bool button){
             break;
         case 1:
             if (button){
-                setRotateMotor(1, true);
+                setRotateMotor(generateHigerMoment(0.5), true);
                 timeOut_teach.reset();
             } else {
                 setStopMotor();
@@ -138,6 +147,7 @@ bool motorTeach(bool button){
             break;
         case 2:
             setStopMotor();
+            resetHigerMoment();
             endPos = positionController_M1.getRotation();
             teach_step = 3;
             break;
@@ -150,14 +160,20 @@ bool motorTeach(bool button){
     return teach_step == 3;
 }
 bool motorMoveHome(){
-    positionController_M1.setDesiredRotation(homePos, 1);
+    positionController_M1.setDesiredRotation(homePos, 0.5);
+    cycle_time.stop();
+    cycle_step = 0;
     return motorOnTarget(homePos);
 }
 
-int cycle_step = 0;
-
-bool motorCycle(int time_in_ms, int time_out_ms){
+bool motorCycle(int time_in_ms, int time_out_ms, int cycle_time_ms){
     float distance = abs(homePos-endPos);
+    float speed_in = distance/(float)time_in_ms*1000;
+    if (speed_in <= 0.09) speed_in = 0.09;
+    float speed_out = distance/(float)time_out_ms*1000;
+    int time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(cycle_time.elapsed_time()).count();
+
+    if (speed_out <= 0.09) speed_out = 0.09;
     switch (cycle_step) {
     case 0:
     cycle_time.start();
@@ -165,20 +181,32 @@ bool motorCycle(int time_in_ms, int time_out_ms){
     cycle_step = 1;
     break;
     case 1:
-    positionController_M1.setDesiredRotation(endPos, distance/time_in_ms);
+    positionController_M1.setDesiredRotation(endPos, generateHigerMoment(speed_in*2));
+    //if (motorOnTarget(endPos) or (time_ms > time_in_ms)) cycle_step = 2;
     if (motorOnTarget(endPos)) cycle_step = 2;
     break;
     case 2:
-    positionController_M1.setDesiredRotation(homePos, distance/time_out_ms);
-    if (motorOnTarget(homePos)) cycle_step = 1;
+    resetHigerMoment();
+    if (time_ms >= time_in_ms) cycle_step = 3;
+    break;
+    case 3:
+    positionController_M1.setDesiredRotation(homePos, speed_out);
+    if (motorOnTarget(homePos)) cycle_step = 4;
+    break;
+    case 4:
+    if (time_ms >= cycle_time_ms){
+        cycle_time.reset();
+        cycle_step = 1;
+    }
     break;
     default:
     cycle_step = 0;
     }
+    printf("Zykle state %i ", cycle_step);
+    printf("speed_in %3.3f ", speed_in);
+    printf("speed_out %3.3f ", speed_out);
     return cycle_step != 0;
 }
-
-const float EPS = 1e-4;
 
 bool motorOnTarget(float target){
     return abs(target - positionController_M1.getRotation())<EPS;
@@ -224,4 +252,33 @@ void resetMotorControll(){
     reference_step = 0;
     referenced = false;
     setStopMotor();
+}
+
+float add_speed_higer_moment = 0;
+Timer time_higer_moment;
+int step_higer_moment = 0;
+
+float generateHigerMoment(float soll_speed){
+    int time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(time_higer_moment.elapsed_time()).count();
+    switch (step_higer_moment) {
+    case 0:
+    time_higer_moment.start();
+    time_higer_moment.reset();
+    add_speed_higer_moment = 0;
+    step_higer_moment = 1;
+    break;
+    case 1:
+    if (time_ms >= 100){
+        time_higer_moment.reset();
+        if (abs(abs(positionController_M1.getSpeedRPS()) - abs(soll_speed))>=1) add_speed_higer_moment += soll_speed*0.1;
+    }
+    }
+    printf("hige moment state: %d speed: %3.3f ", step_higer_moment, soll_speed + add_speed_higer_moment);
+    printf("dif: %3.3f", (abs(abs(positionController_M1.getSpeedRPS()) - abs(soll_speed))));
+    return soll_speed + add_speed_higer_moment;
+}
+
+void resetHigerMoment(){
+    time_higer_moment.stop();
+    step_higer_moment = 0;
 }
