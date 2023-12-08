@@ -182,8 +182,8 @@ bool motorCycle(int time_in_ms, int time_out_ms, int cycle_time_ms){
     break;
     case 1:
     positionController_M1.setDesiredRotation(endPos, generateHigerMoment(speed_in*2));
-    //if (motorOnTarget(endPos) or (time_ms > time_in_ms)) cycle_step = 2;
-    if (motorOnTarget(endPos)) cycle_step = 2;
+    if (motorOnTarget(endPos) or (time_ms > time_in_ms)) cycle_step = 2;
+    //if (motorOnTarget(endPos)) cycle_step = 2;
     break;
     case 2:
     resetHigerMoment();
