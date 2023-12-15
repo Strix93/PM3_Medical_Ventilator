@@ -145,6 +145,11 @@ float PositionController::getRotation()
     return actualRotation - initialRotation;
 }
 
+float PositionController::getVoltage()
+{
+    return voltage_out;
+}
+
 /**
  * Sets the feed-forward gain.
  */
@@ -187,11 +192,13 @@ void PositionController::run()
         if (desiredSpeed < -max_speed) desiredSpeed = -max_speed;
         else if (desiredSpeed > max_speed) desiredSpeed = max_speed;
         float voltage = kp*(desiredSpeed - actualSpeed) + desiredSpeed/kn;
+        voltage_out = voltage;
         // calculate, limit and set duty cycles
         float dutyCycle = 0.5f + 0.5f*voltage/max_voltage;
         if (dutyCycle < MIN_DUTY_CYCLE) dutyCycle = MIN_DUTY_CYCLE;
         else if (dutyCycle > MAX_DUTY_CYCLE) dutyCycle = MAX_DUTY_CYCLE;
         pwm.write(static_cast<double>(dutyCycle));
+        //printf("Motot Volt: %3.3f, DutyCycle: %3.3f", voltage, dutyCycle);
     }
 }
 

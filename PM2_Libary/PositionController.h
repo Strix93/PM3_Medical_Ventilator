@@ -19,6 +19,7 @@ public:
 
     float    getSpeedRPM();
     float    getSpeedRPS();
+    float    getVoltage();
     void     setDesiredRotation(float desiredRotation);
     void     setDesiredRotation(float desiredRotation, float maxSpeedRPS);
     float    getRotation();
@@ -39,6 +40,7 @@ private:
     float max_voltage;
     float max_speed;
     float p;
+    float voltage_out;
 
     FastPWM&           pwm;
     EncoderCounter&    encoderCounter;

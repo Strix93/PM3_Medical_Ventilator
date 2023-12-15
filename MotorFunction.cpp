@@ -9,7 +9,7 @@ float counts_per_turn = 20.0f * 78.0f;    // define counts per turn at gearbox e
 float kn = 78.0f / 12.0f;                  // define motor constant in rpm per V
 float k_gear = 78.0f / 100.0f;            // define additional ratio in case you are using a dc motor with a different gear box, e.g. 100:1
 float kp = 0.1f;                            // define custom kp, this is the default speed controller gain for gear box 78.125:1
-float max_speed_rps = 0.5f;                 // define maximum speed that the position controller is changig the speed, has to be smaller or equal to kn * max_voltage
+float max_speed_rps = 78.0f;                 // define maximum speed that the position controller is changig the speed, has to be smaller or equal to kn * max_voltage
 float pwm_period_s = 0.00005f;    // define pwm period time in seconds and create FastPWM objects to command dc motors
 
 bool motorStoped;
@@ -26,6 +26,8 @@ Timer timeOut_teach;
 float endPos;
 
 int cycle_step = 0;
+int cycle_count = 0;
+int cycle_count_2 = 0;
 
 const int move_main_direction = -1;
 const float EPS = 1e-2;
@@ -74,9 +76,10 @@ void motorEnable(){
 
 void debug(){
     float temp = positionController_M1.getRotation();
-    printf("Geber: %3.3f ", temp);
+    //printf("Geber: %3.3f ", temp);
     printf("Home: %3.3f ", homePos);
     printf("End: %3.3f ", endPos);
+    printf("Cycle Count: %i ", cycle_count);
 }
 
 
@@ -181,19 +184,23 @@ bool motorCycle(int time_in_ms, int time_out_ms, int cycle_time_ms){
     cycle_step = 1;
     break;
     case 1:
-    positionController_M1.setDesiredRotation(endPos, generateHigerMoment(speed_in*2));
+    cycle_count_2 = cycle_count + 1;
+    positionController_M1.setDesiredRotation(endPos, generateHigerMoment(speed_in*1));
+    //positionController_M1.setDesiredRotation(endPos, generateHigerMoment(max_speed_rps));
     if (motorOnTarget(endPos) or (time_ms > time_in_ms)) cycle_step = 2;
     //if (motorOnTarget(endPos)) cycle_step = 2;
     break;
     case 2:
+    cycle_count = cycle_count_2;
     resetHigerMoment();
     if (time_ms >= time_in_ms) cycle_step = 3;
     break;
     case 3:
-    positionController_M1.setDesiredRotation(homePos, speed_out);
+    positionController_M1.setDesiredRotation(homePos, generateHigerMoment(speed_out));
     if (motorOnTarget(homePos)) cycle_step = 4;
     break;
     case 4:
+    resetHigerMoment();
     if (time_ms >= cycle_time_ms){
         cycle_time.reset();
         cycle_step = 1;
@@ -202,9 +209,10 @@ bool motorCycle(int time_in_ms, int time_out_ms, int cycle_time_ms){
     default:
     cycle_step = 0;
     }
-    printf("Zykle state %i ", cycle_step);
-    printf("speed_in %3.3f ", speed_in);
-    printf("speed_out %3.3f ", speed_out);
+    //printf("Zykle state %i ", cycle_step);
+    //printf("speed_in %3.3f ", speed_in);
+    //printf("speed_out %3.3f ", speed_out);
+    printf("Motor Voltage %3.3f ", positionController_M1.getVoltage());
     return cycle_step != 0;
 }
 
@@ -270,11 +278,11 @@ float generateHigerMoment(float soll_speed){
     case 1:
     if (time_ms >= 100){
         time_higer_moment.reset();
-        if (abs(abs(positionController_M1.getSpeedRPS()) - abs(soll_speed))>=1) add_speed_higer_moment += soll_speed*0.1;
+        if (abs(abs(positionController_M1.getSpeedRPS()) - abs(soll_speed))>=1) add_speed_higer_moment += soll_speed*1;
     }
     }
     printf("hige moment state: %d speed: %3.3f ", step_higer_moment, soll_speed + add_speed_higer_moment);
-    printf("dif: %3.3f", (abs(abs(positionController_M1.getSpeedRPS()) - abs(soll_speed))));
+    //printf("dif: %3.3f", (abs(abs(positionController_M1.getSpeedRPS()) - abs(soll_speed))));
     return soll_speed + add_speed_higer_moment;
 }
 
