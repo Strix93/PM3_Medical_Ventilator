@@ -1,8 +1,10 @@
 # include "StateLed.h"
-#include <cstdio>
-#include <string>
+//#include <cstdio>
+//#include <string>
 
 const float StateLed::TS = 0.001f;                       // period of 1 ms
+
+// "stoi" does not work reliably enough, so this is currently replaced by an array
 
 /*StateLed::StateLed(PinName pin, string interval, char seperator) : DigitalOut(pin) {
     this->interval = StringIntervalSeperator(interval, seperator);
@@ -98,6 +100,7 @@ void StateLed::setInterval(int interval_mode){
     }
 }
 
+// "stoi" does not work reliably enough, so this is currently replaced by an array
 void StateLed::run(){
     while(true){
         // wait for the periodic signal
